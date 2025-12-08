@@ -33,6 +33,56 @@ export function ApiResponseView({ apiResponse }) {
         return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
     };
 
+    // Parse document string to extract Question, Answer, and Tags
+    const parseDocument = (docString) => {
+        if (typeof docString !== 'string') {
+            // If it's already an object, return it as-is
+            return docString;
+        }
+
+        const lines = docString.split('\n');
+        const parsed = {
+            Question: '',
+            Answer: '',
+            Tags: ''
+        };
+
+        let currentField = null;
+        let currentValue = [];
+
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith('Question:')) {
+                if (currentField && currentValue.length > 0) {
+                    parsed[currentField] = currentValue.join('\n').trim();
+                }
+                currentField = 'Question';
+                currentValue = [trimmedLine.substring('Question:'.length).trim()];
+            } else if (trimmedLine.startsWith('Answer:')) {
+                if (currentField && currentValue.length > 0) {
+                    parsed[currentField] = currentValue.join('\n').trim();
+                }
+                currentField = 'Answer';
+                currentValue = [trimmedLine.substring('Answer:'.length).trim()];
+            } else if (trimmedLine.startsWith('Tags:')) {
+                if (currentField && currentValue.length > 0) {
+                    parsed[currentField] = currentValue.join('\n').trim();
+                }
+                currentField = 'Tags';
+                currentValue = [trimmedLine.substring('Tags:'.length).trim()];
+            } else if (currentField && trimmedLine) {
+                currentValue.push(trimmedLine);
+            }
+        });
+
+        // Don't forget the last field
+        if (currentField && currentValue.length > 0) {
+            parsed[currentField] = currentValue.join('\n').trim();
+        }
+
+        return parsed;
+    };
+
     return (
         <div className="space-y-6 p-6">
             {/* Answer Section */}
@@ -59,93 +109,96 @@ export function ApiResponseView({ apiResponse }) {
                 </h3>
 
                 <div className="space-y-3">
-                    {apiResponse.relevant_docs?.map((doc, index) => (
-                        <div
-                            key={index}
-                            className="bg-white dark:bg-dark-surface-2 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all"
-                        >
-                            {/* Header */}
-                            <button
-                                onClick={() => toggleDoc(index)}
-                                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-dark-surface-3 transition-colors"
+                    {apiResponse.relevant_docs?.map((docString, index) => {
+                        const doc = parseDocument(docString);
+                        return (
+                            <div
+                                key={index}
+                                className="bg-white dark:bg-dark-surface-2 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all"
                             >
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                        Reference {index + 1}
-                                    </span>
-                                    {apiResponse.distances && apiResponse.distances[index] !== undefined && (
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getScoreBadge(apiResponse.distances[index])}`}>
-                                            {(apiResponse.distances[index] * 100).toFixed(1)}% match
-                                        </span>
-                                    )}
-                                </div>
-
-                                <svg
-                                    className={`w-5 h-5 text-gray-500 transition-transform ${expandedDocs.includes(index) ? 'rotate-180' : ''}`}
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
+                                {/* Header */}
+                                <button
+                                    onClick={() => toggleDoc(index)}
+                                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-dark-surface-3 transition-colors"
                                 >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
-                            {/* Expanded Content */}
-                            {expandedDocs.includes(index) && (
-                                <div className="px-4 pb-4 space-y-3 animate-slideUp">
-                                    {/* Question */}
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                                            Question:
-                                        </p>
-                                        <p className="text-sm text-gray-800 dark:text-gray-200">
-                                            {doc.Question}
-                                        </p>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                            Reference {index + 1}
+                                        </span>
+                                        {apiResponse.distances && apiResponse.distances[index] !== undefined && (
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getScoreBadge(apiResponse.distances[index])}`}>
+                                                {(apiResponse.distances[index] * 100).toFixed(1)}% match
+                                            </span>
+                                        )}
                                     </div>
 
-                                    {/* Answer */}
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                                            Answer:
-                                        </p>
-                                        <p className="text-sm text-gray-800 dark:text-gray-200">
-                                            {doc.Answer}
-                                        </p>
-                                    </div>
+                                    <svg
+                                        className={`w-5 h-5 text-gray-500 transition-transform ${expandedDocs.includes(index) ? 'rotate-180' : ''}`}
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
 
-                                    {/* Tags */}
-                                    {doc.Tags && (
+                                {/* Expanded Content */}
+                                {expandedDocs.includes(index) && (
+                                    <div className="px-4 pb-4 space-y-3 animate-slideUp">
+                                        {/* Question */}
                                         <div>
-                                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
-                                                Tags:
+                                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                                                Question:
                                             </p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {doc.Tags.split(',').map((tag, tagIndex) => (
-                                                    <span
-                                                        key={tagIndex}
-                                                        className="px-2 py-1 bg-buteak-primary/10 text-buteak-primary dark:bg-buteak-gold/10 dark:text-buteak-gold rounded text-xs"
-                                                    >
-                                                        {tag.trim()}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                            <p className="text-sm text-gray-800 dark:text-gray-200">
+                                                {doc.Question || 'N/A'}
+                                            </p>
                                         </div>
-                                    )}
 
-                                    {/* Similarity Score */}
-                                    {apiResponse.distances && apiResponse.distances[index] !== undefined && (
-                                        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                Similarity Score: <span className={`font-semibold ${getScoreColor(apiResponse.distances[index])}`}>
-                                                    {apiResponse.distances[index].toFixed(4)}
-                                                </span>
+                                        {/* Answer */}
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                                                Answer:
+                                            </p>
+                                            <p className="text-sm text-gray-800 dark:text-gray-200">
+                                                {doc.Answer || 'N/A'}
                                             </p>
                                         </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    ))}
+
+                                        {/* Tags */}
+                                        {doc.Tags && (
+                                            <div>
+                                                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                                                    Tags:
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {doc.Tags.split(',').map((tag, tagIndex) => (
+                                                        <span
+                                                            key={tagIndex}
+                                                            className="px-2 py-1 bg-buteak-primary/10 text-buteak-primary dark:bg-buteak-gold/10 dark:text-buteak-gold rounded text-xs"
+                                                        >
+                                                            {tag.trim()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Similarity Score */}
+                                        {apiResponse.distances && apiResponse.distances[index] !== undefined && (
+                                            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                    Similarity Score: <span className={`font-semibold ${getScoreColor(apiResponse.distances[index])}`}>
+                                                        {apiResponse.distances[index].toFixed(4)}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 

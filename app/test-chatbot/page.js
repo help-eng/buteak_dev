@@ -98,18 +98,18 @@ export default function TestChatbot() {
 
             {/* Header */}
             <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-surface-2 shadow-sm">
-                <div className="container mx-auto px-4 py-4">
-                    <Link href="/" className="inline-flex items-center text-buteak-primary dark:text-buteak-gold hover:underline mb-3">
-                        <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="container mx-auto px-4 py-3 sm:py-4">
+                    <Link href="/" className="inline-flex items-center text-buteak-primary dark:text-buteak-gold hover:underline mb-2 sm:mb-3 text-sm">
+                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Back to Home
                     </Link>
 
-                    <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-buteak-primary to-buteak-gold bg-clip-text text-transparent">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-buteak-primary to-buteak-gold bg-clip-text text-transparent">
                         Buteak Suites Chatbot
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
                         Ask me anything about Buteak Suites hotel
                     </p>
                 </div>
@@ -118,30 +118,30 @@ export default function TestChatbot() {
             {/* Tabs */}
             <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-surface-2">
                 <div className="container mx-auto px-4">
-                    <div className="flex gap-2">
+                    <div className="flex gap-1 sm:gap-2 overflow-x-auto">
                         <button
                             onClick={() => setActiveTab("chat")}
-                            className={`px-6 py-3 font-semibold transition-all ${activeTab === "chat"
-                                    ? "border-b-2 border-buteak-gold text-buteak-primary dark:text-buteak-gold"
-                                    : "text-gray-600 dark:text-gray-400 hover:text-buteak-primary dark:hover:text-buteak-gold"
+                            className={`px-4 sm:px-6 py-2 sm:py-3 font-semibold transition-all text-sm sm:text-base whitespace-nowrap ${activeTab === "chat"
+                                ? "border-b-2 border-buteak-gold text-buteak-primary dark:text-buteak-gold"
+                                : "text-gray-600 dark:text-gray-400 hover:text-buteak-primary dark:hover:text-buteak-gold"
                                 }`}
                         >
                             Chat
                         </button>
                         <button
                             onClick={() => setActiveTab("response")}
-                            className={`px-6 py-3 font-semibold transition-all ${activeTab === "response"
-                                    ? "border-b-2 border-buteak-gold text-buteak-primary dark:text-buteak-gold"
-                                    : "text-gray-600 dark:text-gray-400 hover:text-buteak-primary dark:hover:text-buteak-gold"
+                            className={`px-4 sm:px-6 py-2 sm:py-3 font-semibold transition-all text-sm sm:text-base whitespace-nowrap ${activeTab === "response"
+                                ? "border-b-2 border-buteak-gold text-buteak-primary dark:text-buteak-gold"
+                                : "text-gray-600 dark:text-gray-400 hover:text-buteak-primary dark:hover:text-buteak-gold"
                                 }`}
                         >
                             API Response
                         </button>
                         <button
                             onClick={() => setActiveTab("info")}
-                            className={`px-6 py-3 font-semibold transition-all ${activeTab === "info"
-                                    ? "border-b-2 border-buteak-gold text-buteak-primary dark:text-buteak-gold"
-                                    : "text-gray-600 dark:text-gray-400 hover:text-buteak-primary dark:hover:text-buteak-gold"
+                            className={`px-4 sm:px-6 py-2 sm:py-3 font-semibold transition-all text-sm sm:text-base whitespace-nowrap ${activeTab === "info"
+                                ? "border-b-2 border-buteak-gold text-buteak-primary dark:text-buteak-gold"
+                                : "text-gray-600 dark:text-gray-400 hover:text-buteak-primary dark:hover:text-buteak-gold"
                                 }`}
                         >
                             Info
@@ -156,7 +156,7 @@ export default function TestChatbot() {
                     <>
                         {/* Messages Area */}
                         <div className="flex-1 overflow-y-auto">
-                            <div className="container mx-auto px-4 py-6 max-w-4xl">
+                            <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl">
                                 {messages.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-center py-12">
                                         <div className="w-20 h-20 mb-6 rounded-full bg-gradient-to-br from-buteak-primary to-buteak-gold flex items-center justify-center">
@@ -164,10 +164,10 @@ export default function TestChatbot() {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                                             </svg>
                                         </div>
-                                        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                                        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
                                             Welcome to Buteak Suites Chatbot
                                         </h2>
-                                        <p className="text-gray-600 dark:text-gray-400 max-w-md">
+                                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-md">
                                             Ask me anything about our hotel policies, amenities, services, or general information.
                                         </p>
                                         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">

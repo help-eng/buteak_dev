@@ -37,7 +37,7 @@ export default function Home() {
                 </div>
 
                 {/* Navigation Cards */}
-                <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
                     {/* Test APIs Card */}
                     <Link href="/test-apis">
                         <div className="group relative overflow-hidden rounded-2xl bg-white dark:bg-dark-surface-2 p-8 shadow-elevation-2 hover:shadow-elevation-4 transition-all duration-300 cursor-pointer animate-slideUp border border-gray-200 dark:border-gray-700">
@@ -120,6 +120,36 @@ export default function Home() {
 
                                 <div className="mt-6 flex items-center text-buteak-gold group-hover:translate-x-2 transition-transform duration-300">
                                     <span className="font-semibold">Manage Controls</span>
+                                    <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Escalation Controls Card */}
+                    <Link href="/escalation-controls">
+                        <div className="group relative overflow-hidden rounded-2xl bg-white dark:bg-dark-surface-2 p-8 shadow-elevation-2 hover:shadow-elevation-4 transition-all duration-300 cursor-pointer animate-slideUp border border-gray-200 dark:border-gray-700" style={{ animationDelay: '0.3s' }}>
+                            <div className="absolute inset-0 bg-gradient-to-br from-buteak-primary/10 to-buteak-gold/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                            <div className="relative z-10">
+                                <div className="w-16 h-16 mb-6 rounded-full bg-gradient-to-br from-buteak-primary to-buteak-gold flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                                    <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+
+                                <h2 className="text-2xl font-bold mb-3 text-buteak-primary dark:text-buteak-gold">
+                                    Escalation Controls
+                                </h2>
+
+                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                                    Manage escalation timings and staff levels for the ticket system
+                                </p>
+
+                                <div className="mt-6 flex items-center text-buteak-gold group-hover:translate-x-2 transition-transform duration-300">
+                                    <span className="font-semibold">Configure System</span>
                                     <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                     </svg>
