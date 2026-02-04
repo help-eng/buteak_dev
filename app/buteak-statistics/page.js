@@ -7,6 +7,7 @@ import { StatCard } from "@/components/StatCard";
 import { StatusChart } from "@/components/StatusChart";
 import { TypeChart } from "@/components/TypeChart";
 import { RoomChart } from "@/components/RoomChart";
+import { QueryBuilder } from "@/components/QueryBuilder";
 
 export default function ButeakStatistics() {
     const [data, setData] = useState(null);
@@ -19,15 +20,21 @@ export default function ButeakStatistics() {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
+    // Custom query conditions state
+    const [queryConditions, setQueryConditions] = useState(null);
+    const [showQueryBuilder, setShowQueryBuilder] = useState(false);
+
     const fetchData = async (applyFilters = true) => {
         setLoading(true);
         setError(null);
 
         try {
-            // Build URL with query parameters
             const params = new URLSearchParams();
             if (applyFilters && startDate) params.append("startDate", startDate);
             if (applyFilters && endDate) params.append("endDate", endDate);
+            if (applyFilters && queryConditions) {
+                params.append("conditions", JSON.stringify(queryConditions));
+            }
 
             const url = `/api/zoho-service-requests${params.toString() ? '?' + params.toString() : ''}`;
             console.log('Fetching:', url);
@@ -58,6 +65,13 @@ export default function ButeakStatistics() {
     const clearFilters = () => {
         setStartDate("");
         setEndDate("");
+        setQueryConditions(null);
+    };
+
+    const handleQueryApply = (conditions) => {
+        setQueryConditions(conditions);
+        // Auto-fetch when query is applied
+        setTimeout(() => fetchData(true), 100);
     };
 
     useEffect(() => {
@@ -190,6 +204,39 @@ export default function ButeakStatistics() {
                                 Showing: {startDate || 'All Start'} → {endDate || 'All End'} |
                                 Filtered: {data?.total_count || 0} of {totalFetched} records
                             </p>
+                        )}
+                    </div>
+
+                    {/* Query Builder Toggle */}
+                    <div className="mt-4">
+                        <button
+                            onClick={() => setShowQueryBuilder(!showQueryBuilder)}
+                            className="flex items-center gap-2 text-sm font-medium text-buteak-primary dark:text-buteak-gold hover:underline"
+                        >
+                            <svg
+                                className={`w-4 h-4 transition-transform ${showQueryBuilder ? 'rotate-90' : ''}`}
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            {showQueryBuilder ? 'Hide' : 'Show'} Custom Query Builder
+                            {queryConditions && (
+                                <span className="px-2 py-0.5 bg-buteak-gold/20 text-buteak-gold text-xs rounded-full">
+                                    {queryConditions.length} condition{queryConditions.length > 1 ? 's' : ''} active
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Query Builder Panel */}
+                        {showQueryBuilder && (
+                            <div className="mt-4 p-4 bg-white dark:bg-dark-surface-2 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <QueryBuilder
+                                    onApply={handleQueryApply}
+                                    disabled={loading}
+                                />
+                            </div>
                         )}
                     </div>
                 </div>

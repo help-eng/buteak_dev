@@ -18,12 +18,58 @@ function filterByDateRange(requests, startDate, endDate) {
 
         if (startDate && createdTime < new Date(startDate)) return false;
         if (endDate) {
-            // Include the entire end date (set to end of day)
             const endOfDay = new Date(endDate);
             endOfDay.setHours(23, 59, 59, 999);
             if (createdTime > endOfDay) return false;
         }
         return true;
+    });
+}
+
+// Evaluate a single condition against a request record
+function evaluateCondition(request, condition) {
+    const fieldValue = getFieldValue(request[condition.field], "").toLowerCase();
+    const searchValue = (condition.value || "").toLowerCase();
+
+    switch (condition.operator) {
+        case "equals":
+            return fieldValue === searchValue;
+        case "not_equals":
+            return fieldValue !== searchValue;
+        case "contains":
+            return fieldValue.includes(searchValue);
+        case "not_contains":
+            return !fieldValue.includes(searchValue);
+        case "starts_with":
+            return fieldValue.startsWith(searchValue);
+        case "is_empty":
+            return fieldValue === "" || fieldValue === "unknown";
+        case "is_not_empty":
+            return fieldValue !== "" && fieldValue !== "unknown";
+        default:
+            return true;
+    }
+}
+
+// Apply custom query conditions with AND/OR logic
+function filterByConditions(requests, conditions) {
+    if (!conditions || conditions.length === 0) return requests;
+
+    return requests.filter((req) => {
+        let result = evaluateCondition(req, conditions[0]);
+
+        for (let i = 1; i < conditions.length; i++) {
+            const condition = conditions[i];
+            const conditionResult = evaluateCondition(req, condition);
+
+            if (condition.logic === "AND") {
+                result = result && conditionResult;
+            } else {
+                result = result || conditionResult;
+            }
+        }
+
+        return result;
     });
 }
 
@@ -36,24 +82,19 @@ function aggregateData(requests) {
         recent_requests: [],
     };
 
-    // Aggregate by status, type, and room
     requests.forEach((request) => {
-        // Status breakdown (handle both string and object)
         const status = getFieldValue(request.Status, "Unknown");
         stats.by_status[status] = (stats.by_status[status] || 0) + 1;
 
-        // Type breakdown
         const type = getFieldValue(request.Type || request.Request_Type, "Other");
         stats.by_type[type] = (stats.by_type[type] || 0) + 1;
 
-        // Room breakdown
         const room = getFieldValue(request.Room || request.Room_Number, "N/A");
         if (room !== "N/A") {
             stats.by_room[room] = (stats.by_room[room] || 0) + 1;
         }
     });
 
-    // Get recent requests (last 10)
     stats.recent_requests = requests
         .sort((a, b) => {
             const dateA = new Date(a.Created_Time || a.created_time);
@@ -74,39 +115,57 @@ function aggregateData(requests) {
 
 export async function GET(request) {
     try {
-        // Get query parameters for filtering
         const { searchParams } = new URL(request.url);
-        const startDate = searchParams.get("startDate"); // Format: YYYY-MM-DD
-        const endDate = searchParams.get("endDate");     // Format: YYYY-MM-DD
+        const startDate = searchParams.get("startDate");
+        const endDate = searchParams.get("endDate");
+        const queryConditions = searchParams.get("conditions"); // JSON string of conditions
 
         console.log("[Zoho API] Starting request...");
         console.log("[Zoho API] Date filters:", { startDate, endDate });
+        console.log("[Zoho API] Query conditions:", queryConditions);
 
-        // Initialize Zoho CRM handler
+        // Parse conditions if provided
+        let parsedConditions = null;
+        if (queryConditions) {
+            try {
+                parsedConditions = JSON.parse(queryConditions);
+                console.log("[Zoho API] Parsed conditions:", parsedConditions);
+            } catch (e) {
+                console.error("[Zoho API] Failed to parse conditions:", e);
+            }
+        }
+
         const zohoCRMHandler = new Zohocrm();
 
-        // Generate access token
         console.log("[Zoho API] Generating token...");
         await zohoCRMHandler.generateToken();
         console.log("[Zoho API] Token generated successfully");
 
-        // Fetch ALL Service Requests using pagination
         console.log("[Zoho API] Fetching ALL Service Requests with pagination...");
         const allRequests = await zohoCRMHandler.getAllModuleDataPaginated("Service_Requests", 5000);
         console.log(`[Zoho API] Total fetched: ${allRequests.length} service requests`);
 
-        // Apply date filter if provided
-        const filteredRequests = filterByDateRange(allRequests, startDate, endDate);
+        // Apply date filter
+        let filteredRequests = filterByDateRange(allRequests, startDate, endDate);
         console.log(`[Zoho API] After date filter: ${filteredRequests.length} service requests`);
 
-        // Aggregate data
+        // Apply custom query conditions
+        if (parsedConditions && parsedConditions.length > 0) {
+            filteredRequests = filterByConditions(filteredRequests, parsedConditions);
+            console.log(`[Zoho API] After query filter: ${filteredRequests.length} service requests`);
+        }
+
         const stats = aggregateData(filteredRequests);
 
         return NextResponse.json({
             success: true,
             data: stats,
             total_fetched: allRequests.length,
-            filters_applied: { startDate, endDate },
+            filters_applied: {
+                startDate,
+                endDate,
+                conditions: parsedConditions
+            },
             last_updated: new Date().toISOString(),
         });
     } catch (error) {
