@@ -41,7 +41,7 @@ export default class Zohocrm {
 
         try {
             const response = await axios.get(
-                `https://www.zohoapis.in/crm/v8/${moduleName}/search`,
+                `https://www.zohoapis.in/crm/v2/${moduleName}/search`,
                 {
                     headers: {
                         Authorization: `Zoho-oauthtoken ${this.accessToken}`,
@@ -66,7 +66,7 @@ export default class Zohocrm {
 
         try {
             const response = await axios.get(
-                `https://www.zohoapis.in/crm/v8/${moduleName}`,
+                `https://www.zohoapis.in/crm/v2/${moduleName}`,
                 {
                     headers: {
                         Authorization: `Zoho-oauthtoken ${this.accessToken}`,
@@ -90,7 +90,7 @@ export default class Zohocrm {
 
         try {
             const response = await axios.get(
-                `https://www.zohoapis.in/crm/v8/${moduleName}/${recordId}`,
+                `https://www.zohoapis.in/crm/v2/${moduleName}/${recordId}`,
                 {
                     headers: {
                         Authorization: `Zoho-oauthtoken ${this.accessToken}`,
@@ -129,7 +129,7 @@ export default class Zohocrm {
 
         try {
             const response = await axios.put(
-                `https://www.zohoapis.in/crm/v8/${moduleName}/${recordId}`,
+                `https://www.zohoapis.in/crm/v2/${moduleName}/${recordId}`,
                 {
                     data: [data],
                 },
