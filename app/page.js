@@ -37,7 +37,7 @@ export default function Home() {
                 </div>
 
                 {/* Navigation Cards */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 max-w-7xl mx-auto">
                     {/* Test APIs Card */}
                     <Link href="/test-apis">
                         <div className="group relative overflow-hidden rounded-2xl bg-white dark:bg-dark-surface-2 p-8 shadow-elevation-2 hover:shadow-elevation-4 transition-all duration-300 cursor-pointer animate-slideUp border border-gray-200 dark:border-gray-700">
@@ -150,6 +150,36 @@ export default function Home() {
 
                                 <div className="mt-6 flex items-center text-buteak-gold group-hover:translate-x-2 transition-transform duration-300">
                                     <span className="font-semibold">Configure System</span>
+                                    <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Buteak Statistics Card */}
+                    <Link href="/buteak-statistics">
+                        <div className="group relative overflow-hidden rounded-2xl bg-white dark:bg-dark-surface-2 p-8 shadow-elevation-2 hover:shadow-elevation-4 transition-all duration-300 cursor-pointer animate-slideUp border border-gray-200 dark:border-gray-700" style={{ animationDelay: '0.4s' }}>
+                            <div className="absolute inset-0 bg-gradient-to-br from-buteak-primary/10 to-buteak-gold/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                            <div className="relative z-10">
+                                <div className="w-16 h-16 mb-6 rounded-full bg-gradient-to-br from-buteak-primary to-buteak-gold flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                                    <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                </div>
+
+                                <h2 className="text-2xl font-bold mb-3 text-buteak-primary dark:text-buteak-gold">
+                                    Buteak Statistics
+                                </h2>
+
+                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                                    View real-time service requests and hotel performance metrics from Zoho CRM
+                                </p>
+
+                                <div className="mt-6 flex items-center text-buteak-gold group-hover:translate-x-2 transition-transform duration-300">
+                                    <span className="font-semibold">View Dashboard</span>
                                     <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                     </svg>
