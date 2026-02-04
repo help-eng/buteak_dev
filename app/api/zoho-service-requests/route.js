@@ -65,10 +65,10 @@ async function getAccessToken() {
 
 async function fetchServiceRequests(accessToken) {
     try {
-        const url = `${ZOHO_API_BASE}/Service_Requests?per_page=200`;
+        // Use /search endpoint like the working code
+        const url = `${ZOHO_API_BASE}/Service_Requests/search?per_page=200`;
         console.log('[Zoho] Fetching service requests from:', url);
 
-        // Fetch Service Requests from Zoho CRM
         const response = await fetch(url, {
             headers: {
                 Authorization: `Zoho-oauthtoken ${accessToken}`,
@@ -77,6 +77,7 @@ async function fetchServiceRequests(accessToken) {
 
         const responseText = await response.text();
         console.log('[Zoho] Service requests response status:', response.status);
+        console.log('[Zoho] Service requests response body:', responseText.substring(0, 500));
 
         if (!response.ok) {
             console.error('[Zoho] Service requests error:', responseText);
