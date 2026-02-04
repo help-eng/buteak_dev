@@ -1,0 +1,15 @@
+{
+  "timings": {
+    "T1": 10000,
+    "T2": 60000,
+    "T3": 120000,
+    "T4": 0,
+    "escalationWait": 20000
+  },
+  "levels": {
+    "L1": "Reception",
+    "L2": "Manager",
+    "L3": "Owner",
+    "L4": "Tech"
+  }
+}
