@@ -83,6 +83,52 @@ export default class Zohocrm {
         }
     }
 
+    // Fetch ALL records using pagination (handles more than 200 records)
+    async getAllModuleDataPaginated(moduleName, maxRecords = 2000) {
+        if (!this.accessToken) {
+            throw new Error("No access token available. Call generateToken() first.");
+        }
+
+        let allRecords = [];
+        let page = 1;
+        let hasMore = true;
+        const perPage = 200; // Zoho max per page
+
+        try {
+            while (hasMore && allRecords.length < maxRecords) {
+                console.log(`[Zohocrm] Fetching ${moduleName} page ${page}...`);
+
+                const response = await axios.get(
+                    `https://www.zohoapis.in/crm/v2/${moduleName}`,
+                    {
+                        headers: {
+                            Authorization: `Zoho-oauthtoken ${this.accessToken}`,
+                        },
+                        params: {
+                            per_page: perPage,
+                            page: page,
+                        },
+                    }
+                );
+
+                const data = response.data.data || [];
+                allRecords = allRecords.concat(data);
+
+                // Check if there are more records
+                const info = response.data.info || {};
+                hasMore = info.more_records === true;
+                page++;
+
+                console.log(`[Zohocrm] Fetched ${data.length} records, total so far: ${allRecords.length}`);
+            }
+
+            return allRecords;
+        } catch (error) {
+            console.error(`[Zohocrm] Error fetching paginated ${moduleName}:`, error.response?.data || error.message);
+            throw error;
+        }
+    }
+
     async getRecordById(moduleName, recordId) {
         if (!this.accessToken) {
             throw new Error("No access token available");

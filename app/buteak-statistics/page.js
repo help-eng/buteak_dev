@@ -13,13 +13,26 @@ export default function ButeakStatistics() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [lastUpdated, setLastUpdated] = useState(null);
+    const [totalFetched, setTotalFetched] = useState(0);
 
-    const fetchData = async () => {
+    // Date filter state
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+
+    const fetchData = async (applyFilters = true) => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await fetch("/api/zoho-service-requests");
+            // Build URL with query parameters
+            const params = new URLSearchParams();
+            if (applyFilters && startDate) params.append("startDate", startDate);
+            if (applyFilters && endDate) params.append("endDate", endDate);
+
+            const url = `/api/zoho-service-requests${params.toString() ? '?' + params.toString() : ''}`;
+            console.log('Fetching:', url);
+
+            const response = await fetch(url);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -32,6 +45,7 @@ export default function ButeakStatistics() {
             }
 
             setData(result.data);
+            setTotalFetched(result.total_fetched || result.data?.total_count || 0);
             setLastUpdated(result.last_updated);
         } catch (err) {
             console.error("Error fetching statistics:", err);
@@ -39,6 +53,11 @@ export default function ButeakStatistics() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const clearFilters = () => {
+        setStartDate("");
+        setEndDate("");
     };
 
     useEffect(() => {
@@ -92,7 +111,7 @@ export default function ButeakStatistics() {
                             </p>
                             {lastUpdated && (
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    Last updated: {formatLastUpdated(lastUpdated)}
+                                    Last updated: {formatLastUpdated(lastUpdated)} | Total Records: {totalFetched}
                                 </p>
                             )}
                         </div>
@@ -116,6 +135,62 @@ export default function ButeakStatistics() {
                             </svg>
                             Refresh
                         </button>
+                    </div>
+
+                    {/* Date Range Filter */}
+                    <div className="mt-6 p-4 bg-white dark:bg-dark-surface-2 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    From:
+                                </label>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-buteak-gold focus:border-transparent"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    To:
+                                </label>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-buteak-gold focus:border-transparent"
+                                />
+                            </div>
+                            <button
+                                onClick={() => fetchData(true)}
+                                disabled={loading}
+                                className="px-4 py-2 bg-buteak-gold hover:bg-buteak-gold/90 text-dark-bg font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                </svg>
+                                Apply Filter
+                            </button>
+                            {(startDate || endDate) && (
+                                <button
+                                    onClick={() => {
+                                        clearFilters();
+                                        // Fetch without filters after clearing
+                                        setTimeout(() => fetchData(false), 100);
+                                    }}
+                                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors"
+                                >
+                                    Clear Filters
+                                </button>
+                            )}
+                        </div>
+                        {(startDate || endDate) && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                Showing: {startDate || 'All Start'} → {endDate || 'All End'} |
+                                Filtered: {data?.total_count || 0} of {totalFetched} records
+                            </p>
+                        )}
                     </div>
                 </div>
 
