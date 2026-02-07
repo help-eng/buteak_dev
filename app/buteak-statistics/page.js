@@ -24,7 +24,7 @@ export default function ButeakStatistics() {
     const [queryConditions, setQueryConditions] = useState(null);
     const [showQueryBuilder, setShowQueryBuilder] = useState(false);
 
-    const fetchData = async (applyFilters = true) => {
+    const fetchData = async (applyFilters = true, overrideConditions = null) => {
         setLoading(true);
         setError(null);
 
@@ -32,8 +32,11 @@ export default function ButeakStatistics() {
             const params = new URLSearchParams();
             if (applyFilters && startDate) params.append("startDate", startDate);
             if (applyFilters && endDate) params.append("endDate", endDate);
-            if (applyFilters && queryConditions) {
-                params.append("conditions", JSON.stringify(queryConditions));
+
+            // Use overrideConditions if provided, otherwise use state
+            const conditionsToUse = overrideConditions !== null ? overrideConditions : queryConditions;
+            if (applyFilters && conditionsToUse) {
+                params.append("conditions", JSON.stringify(conditionsToUse));
             }
 
             const url = `/api/zoho-service-requests${params.toString() ? '?' + params.toString() : ''}`;
@@ -70,8 +73,8 @@ export default function ButeakStatistics() {
 
     const handleQueryApply = (conditions) => {
         setQueryConditions(conditions);
-        // Auto-fetch when query is applied
-        setTimeout(() => fetchData(true), 100);
+        // Pass conditions directly to fetchData to avoid race condition with setState
+        fetchData(true, conditions);
     };
 
     useEffect(() => {
