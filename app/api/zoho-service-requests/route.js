@@ -35,26 +35,51 @@ function evaluateCondition(request, condition) {
     const fieldValue = getFieldValue(rawFieldValue, "");
     const searchValue = (condition.value || "").trim();
 
-    // For comparison, convert both to lowercase strings
-    const fieldValueLower = String(fieldValue).toLowerCase();
-    const searchValueLower = searchValue.toLowerCase();
+    // Determine comparison type (default to string)
+    const compareAs = condition.compareAs || "string";
+
+    // Convert values based on comparison type
+    let compareFieldValue, compareSearchValue;
+
+    if (compareAs === "number") {
+        // For number comparison, parse both as numbers
+        compareFieldValue = parseFloat(fieldValue) || 0;
+        compareSearchValue = parseFloat(searchValue) || 0;
+    } else {
+        // For string comparison, convert to lowercase strings
+        compareFieldValue = String(fieldValue).toLowerCase();
+        compareSearchValue = searchValue.toLowerCase();
+    }
 
     switch (condition.operator) {
         case "equals":
-            // Try both exact match and case-insensitive match
-            return fieldValue === searchValue || fieldValueLower === searchValueLower;
+            if (compareAs === "number") {
+                return compareFieldValue === compareSearchValue;
+            }
+            // For strings, try both exact match and case-insensitive match
+            return fieldValue === searchValue || compareFieldValue === compareSearchValue;
+
         case "not_equals":
-            return fieldValue !== searchValue && fieldValueLower !== searchValueLower;
+            if (compareAs === "number") {
+                return compareFieldValue !== compareSearchValue;
+            }
+            return fieldValue !== searchValue && compareFieldValue !== compareSearchValue;
+
         case "contains":
-            return fieldValueLower.includes(searchValueLower);
+            return compareFieldValue.toString().includes(compareSearchValue.toString());
+
         case "not_contains":
-            return !fieldValueLower.includes(searchValueLower);
+            return !compareFieldValue.toString().includes(compareSearchValue.toString());
+
         case "starts_with":
-            return fieldValueLower.startsWith(searchValueLower);
+            return compareFieldValue.toString().startsWith(compareSearchValue.toString());
+
         case "is_empty":
-            return fieldValue === "" || fieldValue === "unknown" || fieldValueLower === "unknown";
+            return fieldValue === "" || fieldValue === "unknown" || compareFieldValue === "unknown";
+
         case "is_not_empty":
-            return fieldValue !== "" && fieldValue !== "unknown" && fieldValueLower !== "unknown";
+            return fieldValue !== "" && fieldValue !== "unknown" && compareFieldValue !== "unknown";
+
         default:
             return true;
     }
