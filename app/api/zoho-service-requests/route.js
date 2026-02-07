@@ -28,24 +28,33 @@ function filterByDateRange(requests, startDate, endDate) {
 
 // Evaluate a single condition against a request record
 function evaluateCondition(request, condition) {
-    const fieldValue = getFieldValue(request[condition.field], "").toLowerCase();
-    const searchValue = (condition.value || "").toLowerCase();
+    // Get the raw field value
+    const rawFieldValue = request[condition.field];
+
+    // Extract the actual value (handles both strings and lookup objects {name, id})
+    const fieldValue = getFieldValue(rawFieldValue, "");
+    const searchValue = (condition.value || "").trim();
+
+    // For comparison, convert both to lowercase strings
+    const fieldValueLower = String(fieldValue).toLowerCase();
+    const searchValueLower = searchValue.toLowerCase();
 
     switch (condition.operator) {
         case "equals":
-            return fieldValue === searchValue;
+            // Try both exact match and case-insensitive match
+            return fieldValue === searchValue || fieldValueLower === searchValueLower;
         case "not_equals":
-            return fieldValue !== searchValue;
+            return fieldValue !== searchValue && fieldValueLower !== searchValueLower;
         case "contains":
-            return fieldValue.includes(searchValue);
+            return fieldValueLower.includes(searchValueLower);
         case "not_contains":
-            return !fieldValue.includes(searchValue);
+            return !fieldValueLower.includes(searchValueLower);
         case "starts_with":
-            return fieldValue.startsWith(searchValue);
+            return fieldValueLower.startsWith(searchValueLower);
         case "is_empty":
-            return fieldValue === "" || fieldValue === "unknown";
+            return fieldValue === "" || fieldValue === "unknown" || fieldValueLower === "unknown";
         case "is_not_empty":
-            return fieldValue !== "" && fieldValue !== "unknown";
+            return fieldValue !== "" && fieldValue !== "unknown" && fieldValueLower !== "unknown";
         default:
             return true;
     }
