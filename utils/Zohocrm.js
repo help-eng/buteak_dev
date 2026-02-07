@@ -94,6 +94,9 @@ export default class Zohocrm {
         let hasMore = true;
         const perPage = 200; // Zoho max per page
 
+        // Helper to add delay between requests to avoid rate limiting
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
         try {
             while (hasMore && allRecords.length < maxRecords) {
                 console.log(`[Zohocrm] Fetching ${moduleName} page ${page}...`);
@@ -120,6 +123,11 @@ export default class Zohocrm {
                 page++;
 
                 console.log(`[Zohocrm] Fetched ${data.length} records, total so far: ${allRecords.length}`);
+
+                // Add delay between requests to avoid rate limiting
+                if (hasMore) {
+                    await delay(300);
+                }
             }
 
             return allRecords;
