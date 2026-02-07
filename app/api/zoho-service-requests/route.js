@@ -113,10 +113,31 @@ function aggregateData(requests) {
         by_status: {},
         by_type: {},
         by_room: {},
+        by_month: [],
         recent_requests: [],
     };
 
+    // Generate last 12 months template
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const fullMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const now = new Date();
+    const monthsData = {};
+
+    // Initialize last 12 months with 0 counts
+    for (let i = 11; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthsData[key] = {
+            year: date.getFullYear(),
+            month: date.getMonth() + 1,
+            monthName: fullMonthNames[date.getMonth()],
+            monthShort: monthNames[date.getMonth()],
+            count: 0
+        };
+    }
+
     requests.forEach((request) => {
+        // Existing aggregations
         const status = getFieldValue(request.Status, "Unknown");
         stats.by_status[status] = (stats.by_status[status] || 0) + 1;
 
@@ -127,6 +148,22 @@ function aggregateData(requests) {
         if (room !== "N/A") {
             stats.by_room[room] = (stats.by_room[room] || 0) + 1;
         }
+
+        // Monthly aggregation
+        const createdTime = request.Created_Time || request.created_time;
+        if (createdTime) {
+            const date = new Date(createdTime);
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            if (monthsData[key]) {
+                monthsData[key].count++;
+            }
+        }
+    });
+
+    // Convert months data to sorted array
+    stats.by_month = Object.values(monthsData).sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
     });
 
     stats.recent_requests = requests

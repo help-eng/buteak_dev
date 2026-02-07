@@ -7,6 +7,7 @@ import { StatCard } from "@/components/StatCard";
 import { StatusChart } from "@/components/StatusChart";
 import { TypeChart } from "@/components/TypeChart";
 import { RoomChart } from "@/components/RoomChart";
+import { MonthlyChart } from "@/components/MonthlyChart";
 import { QueryBuilder } from "@/components/QueryBuilder";
 
 export default function ButeakStatistics() {
@@ -412,6 +413,11 @@ export default function ButeakStatistics() {
                             {/* Room Chart */}
                             <div className="bg-white dark:bg-dark-surface-2 rounded-2xl shadow-elevation-3 p-6 border border-gray-200 dark:border-gray-700">
                                 <RoomChart data={data.by_room} />
+                            </div>
+
+                            {/* Monthly Chart - Full Width */}
+                            <div className="bg-white dark:bg-dark-surface-2 rounded-2xl shadow-elevation-3 p-6 border border-gray-200 dark:border-gray-700 md:col-span-2">
+                                <MonthlyChart data={data.by_month} />
                             </div>
 
                             {/* Recent Requests */}
