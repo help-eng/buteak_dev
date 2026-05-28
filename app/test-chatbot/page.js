@@ -7,12 +7,14 @@ import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { ApiResponseView } from "@/components/ApiResponseView";
+import { PROPERTIES, DEFAULT_PROPERTY_ID } from "@/lib/properties";
 
 export default function TestChatbot() {
     const [activeTab, setActiveTab] = useState("chat");
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
     const [latestApiResponse, setLatestApiResponse] = useState(null);
+    const [propertyId, setPropertyId] = useState(DEFAULT_PROPERTY_ID);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -44,6 +46,7 @@ export default function TestChatbot() {
                 body: JSON.stringify({
                     question: messageText,
                     n_results: 3,
+                    property_id: propertyId,
                 }),
             });
 
@@ -106,12 +109,32 @@ export default function TestChatbot() {
                         Back to Home
                     </Link>
 
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-buteak-primary to-buteak-gold bg-clip-text text-transparent">
-                        Buteak Suites Chatbot
-                    </h1>
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
-                        Ask me anything about Buteak Suites hotel
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-buteak-primary to-buteak-gold bg-clip-text text-transparent">
+                                Buteak Suites Chatbot
+                            </h1>
+                            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
+                                Ask me anything about Buteak Suites hotel
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col gap-1 sm:min-w-[240px]">
+                            <label htmlFor="property-select" className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                                Property
+                            </label>
+                            <select
+                                id="property-select"
+                                value={propertyId}
+                                onChange={(e) => setPropertyId(e.target.value)}
+                                className="px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-buteak-gold focus:border-transparent"
+                            >
+                                {PROPERTIES.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -11,7 +11,7 @@ export async function POST(request) {
             );
         }
 
-        const url = `https://api.buteak.in/update?property_id=${encodeURIComponent(property_id)}`;
+        const url = `https://api.buteak.in/delete?property_id=${encodeURIComponent(property_id)}`;
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -23,7 +23,7 @@ export async function POST(request) {
         if (!response.ok) {
             const errorText = await response.text();
             return NextResponse.json(
-                { error: `Update API error: ${errorText}` },
+                { error: `Delete API error: ${errorText}` },
                 { status: response.status }
             );
         }
@@ -31,7 +31,7 @@ export async function POST(request) {
         const result = await response.json();
         return NextResponse.json(result);
     } catch (error) {
-        console.error("Error calling update API:", error);
+        console.error("Error calling delete API:", error);
         return NextResponse.json(
             { error: error.message || "Internal server error" },
             { status: 500 }

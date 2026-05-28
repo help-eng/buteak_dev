@@ -3,19 +3,25 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PROPERTIES, DEFAULT_PROPERTY_ID } from "@/lib/properties";
 
 export default function ChatbotControls() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [propertyId, setPropertyId] = useState(DEFAULT_PROPERTY_ID);
     const [loading, setLoading] = useState({
         update: false,
         rebuild: false,
+        delete: false,
     });
     const [results, setResults] = useState({
         update: null,
         rebuild: null,
+        delete: null,
     });
+
+    const selectedProperty = PROPERTIES.find((p) => p.id === propertyId) || PROPERTIES[0];
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -38,6 +44,7 @@ export default function ChatbotControls() {
             const response = await fetch("/api/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ property_id: propertyId }),
             });
 
             if (!response.ok) {
@@ -55,7 +62,7 @@ export default function ChatbotControls() {
 
     const handleRebuild = async () => {
         const confirmed = confirm(
-            "⚠️ WARNING: This will rebuild the entire vector database from scratch!\n\n" +
+            `⚠️ WARNING: This will rebuild the entire vector database for ${selectedProperty.label} from scratch!\n\n` +
             "This operation:\n" +
             "• Will cost a significant amount of tokens\n" +
             "• Should only be used for major changes\n" +
@@ -73,6 +80,7 @@ export default function ChatbotControls() {
             const response = await fetch("/api/rebuild", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ property_id: propertyId }),
             });
 
             if (!response.ok) {
@@ -85,6 +93,41 @@ export default function ChatbotControls() {
             setResults(prev => ({ ...prev, rebuild: { success: false, error: err.message } }));
         } finally {
             setLoading(prev => ({ ...prev, rebuild: false }));
+        }
+    };
+
+    const handleDelete = async () => {
+        const confirmed = confirm(
+            `🗑️ DELETE the vector database for ${selectedProperty.label}?\n\n` +
+            "This operation:\n" +
+            "• Wipes the FAISS index, metadata, and hash file for this property\n" +
+            "• Other properties are NOT affected\n" +
+            "• A subsequent /chat or /update will auto-rebuild from the sheet tab\n\n" +
+            "Are you sure?"
+        );
+
+        if (!confirmed) return;
+
+        setLoading(prev => ({ ...prev, delete: true }));
+        setResults(prev => ({ ...prev, delete: null }));
+
+        try {
+            const response = await fetch("/api/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ property_id: propertyId }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setResults(prev => ({ ...prev, delete: { success: true, data } }));
+        } catch (err) {
+            setResults(prev => ({ ...prev, delete: { success: false, error: err.message } }));
+        } finally {
+            setLoading(prev => ({ ...prev, delete: false }));
         }
     };
 
@@ -181,8 +224,28 @@ export default function ChatbotControls() {
                     </div>
                 </div>
 
+                {/* Property Selector */}
+                <div className="max-w-6xl bg-white dark:bg-dark-surface-2 rounded-2xl shadow-elevation-2 p-6 mb-6 animate-fadeIn">
+                    <label htmlFor="property-select" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Property
+                    </label>
+                    <select
+                        id="property-select"
+                        value={propertyId}
+                        onChange={(e) => setPropertyId(e.target.value)}
+                        className="w-full md:max-w-md px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-buteak-gold focus:border-transparent"
+                    >
+                        {PROPERTIES.map((p) => (
+                            <option key={p.id} value={p.id}>{p.label}</option>
+                        ))}
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        All controls below operate on the selected property only.
+                    </p>
+                </div>
+
                 {/* Control Cards */}
-                <div className="grid md:grid-cols-3 gap-6 max-w-6xl">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl">
                     {/* Edit Sheet Card */}
                     <div className="bg-white dark:bg-dark-surface-2 rounded-2xl shadow-elevation-3 p-6 animate-fadeIn">
                         <div className="w-12 h-12 mb-4 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -317,6 +380,48 @@ export default function ChatbotControls() {
                             </div>
                         )}
                     </div>
+
+                    {/* Delete Card */}
+                    <div className="bg-white dark:bg-dark-surface-2 rounded-2xl shadow-elevation-3 p-6 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+                        <div className="w-12 h-12 mb-4 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
+                            </svg>
+                        </div>
+
+                        <h2 className="text-xl font-bold text-buteak-primary dark:text-buteak-gold mb-2">
+                            Delete Database
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                            Wipe this property&apos;s vector DB. Other properties are unaffected.
+                        </p>
+
+                        <button
+                            onClick={handleDelete}
+                            disabled={loading.delete}
+                            className="w-full px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        >
+                            {loading.delete ? (
+                                <span className="flex items-center justify-center">
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Deleting...
+                                </span>
+                            ) : (
+                                "Delete"
+                            )}
+                        </button>
+
+                        {results.delete && (
+                            <div className={`mt-3 p-3 rounded-lg ${results.delete.success ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'}`}>
+                                <p className={`text-sm ${results.delete.success ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'}`}>
+                                    {results.delete.success ? '✓ Delete successful!' : `✗ Error: ${results.delete.error}`}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Info Section */}
@@ -325,9 +430,11 @@ export default function ChatbotControls() {
                         Usage Guidelines
                     </h3>
                     <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                        <p><strong>1. Edit Sheet:</strong> Make changes to the Google Sheets document</p>
+                        <p><strong>0. Property:</strong> Pick which property the controls below should operate on. Each property has its own isolated vector database — actions only affect the selected one.</p>
+                        <p><strong>1. Edit Sheet:</strong> Make changes to the Google Sheets document (each property has its own tab)</p>
                         <p><strong>2. Update:</strong> For small changes (adding/editing a few rows), click UPDATE to sync the database</p>
-                        <p><strong>3. Rebuild:</strong> Only use for major structural changes or when UPDATE doesn't work. This is expensive!</p>
+                        <p><strong>3. Rebuild:</strong> Only use for major structural changes or when UPDATE doesn&apos;t work. This is expensive!</p>
+                        <p><strong>4. Delete:</strong> Wipes this property&apos;s vector DB. Useful for forcing a clean rebuild on the next query.</p>
                     </div>
                 </div>
             </div>

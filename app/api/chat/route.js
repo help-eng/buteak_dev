@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
     try {
-        const { question, n_results } = await request.json();
+        const { question, n_results, property_id } = await request.json();
 
         if (!question) {
             return NextResponse.json(
@@ -11,7 +11,6 @@ export async function POST(request) {
             );
         }
 
-        // Call the chatbot API
         const response = await fetch("https://api.buteak.in/chat", {
             method: "POST",
             headers: {
@@ -20,6 +19,7 @@ export async function POST(request) {
             body: JSON.stringify({
                 question,
                 n_results: n_results || 3,
+                property_id: property_id || undefined,
             }),
         });
 

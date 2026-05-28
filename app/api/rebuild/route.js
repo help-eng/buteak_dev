@@ -2,8 +2,17 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
     try {
-        // Call the rebuild API
-        const response = await fetch("https://api.buteak.in/rebuild", {
+        const { property_id } = await request.json().catch(() => ({}));
+
+        if (!property_id) {
+            return NextResponse.json(
+                { error: "Missing 'property_id' in request body" },
+                { status: 400 }
+            );
+        }
+
+        const url = `https://api.buteak.in/rebuild?property_id=${encodeURIComponent(property_id)}`;
+        const response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
