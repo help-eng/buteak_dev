@@ -211,6 +211,7 @@ function aggregateData(requests) {
 
     const toListItem = (req) => ({
         id: req.id,
+        title: getFieldValue(req.Name, ""),
         room: getFieldValue(req.Room || req.Room_Number, "N/A"),
         type: getFieldValue(req.Type || req.Request_Type, "Other"),
         status: getFieldValue(req.Status, "Unknown"),

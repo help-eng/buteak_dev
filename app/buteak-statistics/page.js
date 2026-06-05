@@ -595,6 +595,11 @@ export default function ButeakStatistics() {
                                                         {req.status}
                                                     </span>
                                                 </div>
+                                                {req.title && (
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                                                        {req.title}
+                                                    </p>
+                                                )}
                                                 <p className="text-sm text-gray-600 dark:text-gray-400">
                                                     {req.type}
                                                 </p>
@@ -642,6 +647,11 @@ export default function ButeakStatistics() {
                                                         {req.status}
                                                     </span>
                                                 </div>
+                                                {req.title && (
+                                                    <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">
+                                                        {req.title}
+                                                    </p>
+                                                )}
                                                 <p className="text-sm text-red-800 dark:text-red-300">
                                                     {req.type}
                                                 </p>
