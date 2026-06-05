@@ -3,18 +3,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext({
-    theme: "dark",
+    theme: "light",
     toggleTheme: () => { },
 });
 
 export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState("dark");
+    const [theme, setTheme] = useState("light");
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
-        // Load theme from localStorage
-        const savedTheme = localStorage.getItem("theme") || "dark";
+        // Load theme from localStorage (default to light if not set)
+        const savedTheme = localStorage.getItem("theme") || "light";
         setTheme(savedTheme);
         document.documentElement.classList.toggle("dark", savedTheme === "dark");
     }, []);
@@ -26,9 +26,9 @@ export function ThemeProvider({ children }) {
         document.documentElement.classList.toggle("dark", newTheme === "dark");
     };
 
-    // Prevent flash of unstyled content
+    // Prevent flash of unstyled content (default to light during SSR)
     if (!mounted) {
-        return <div className="dark">{children}</div>;
+        return <>{children}</>;
     }
 
     return (

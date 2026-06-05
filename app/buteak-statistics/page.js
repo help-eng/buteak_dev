@@ -9,6 +9,21 @@ import { TypeChart } from "@/components/TypeChart";
 import { RoomChart } from "@/components/RoomChart";
 import { MonthlyChart } from "@/components/MonthlyChart";
 import { QueryBuilder } from "@/components/QueryBuilder";
+import { PROPERTIES } from "@/lib/properties";
+
+// Date preset → days subtracted from "today" for start date
+const DATE_PRESETS = [
+    { id: "1d", label: "1d", days: 1 },
+    { id: "7d", label: "7d", days: 7 },
+    { id: "1m", label: "1m", days: 30 },
+    { id: "1y", label: "1y", days: 365 },
+];
+
+function isoDate(d) {
+    // yyyy-mm-dd for <input type="date">
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 export default function ButeakStatistics() {
     const [data, setData] = useState(null);
@@ -20,24 +35,45 @@ export default function ButeakStatistics() {
     // Date filter state
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [datePreset, setDatePreset] = useState(null); // null | "1d" | "7d" | "1m" | "1y" | "custom"
+
+    // Test Mode + Property selector
+    const [testMode, setTestMode] = useState(false);
+    const [propertyId, setPropertyId] = useState("all");
 
     // Custom query conditions state
     const [queryConditions, setQueryConditions] = useState(null);
     const [showQueryBuilder, setShowQueryBuilder] = useState(false);
 
-    const fetchData = async (applyFilters = true, overrideConditions = null) => {
+    const fetchData = async (
+        applyFilters = true,
+        overrideConditions,
+        overrideTestMode,
+        overridePropertyId,
+        overrideStartDate,
+        overrideEndDate
+    ) => {
         setLoading(true);
         setError(null);
 
         try {
             const params = new URLSearchParams();
-            if (applyFilters && startDate) params.append("startDate", startDate);
-            if (applyFilters && endDate) params.append("endDate", endDate);
+            const effectiveStart = overrideStartDate !== undefined ? overrideStartDate : startDate;
+            const effectiveEnd = overrideEndDate !== undefined ? overrideEndDate : endDate;
+            const effectiveTestMode = overrideTestMode !== undefined ? overrideTestMode : testMode;
+            const effectivePropertyId = overridePropertyId !== undefined ? overridePropertyId : propertyId;
+            const effectiveConditions = overrideConditions !== undefined ? overrideConditions : queryConditions;
 
-            // Use overrideConditions if provided, otherwise use state
-            const conditionsToUse = overrideConditions !== null ? overrideConditions : queryConditions;
-            if (applyFilters && conditionsToUse) {
-                params.append("conditions", JSON.stringify(conditionsToUse));
+            if (applyFilters && effectiveStart) params.append("startDate", effectiveStart);
+            if (applyFilters && effectiveEnd) params.append("endDate", effectiveEnd);
+            if (applyFilters && effectiveConditions) {
+                params.append("conditions", JSON.stringify(effectiveConditions));
+            }
+            // testMode + propertyId always apply (they are dashboard-wide modes,
+            // not per-query filters)
+            params.append("testMode", String(effectiveTestMode));
+            if (effectivePropertyId && effectivePropertyId !== "all") {
+                params.append("propertyId", effectivePropertyId);
             }
 
             const url = `/api/zoho-service-requests${params.toString() ? '?' + params.toString() : ''}`;
@@ -70,6 +106,7 @@ export default function ButeakStatistics() {
         setStartDate("");
         setEndDate("");
         setQueryConditions(null);
+        setDatePreset(null);
     };
 
     const handleQueryApply = (conditions) => {
@@ -78,8 +115,45 @@ export default function ButeakStatistics() {
         fetchData(true, conditions);
     };
 
+    const handleDatePreset = (presetId) => {
+        if (presetId === "custom") {
+            setDatePreset("custom");
+            // Don't fetch — wait for user to type dates and click Apply
+            return;
+        }
+
+        const preset = DATE_PRESETS.find((p) => p.id === presetId);
+        if (!preset) return;
+
+        const today = new Date();
+        const start = new Date();
+        start.setDate(today.getDate() - preset.days);
+
+        const startStr = isoDate(start);
+        const endStr = isoDate(today);
+
+        setDatePreset(presetId);
+        setStartDate(startStr);
+        setEndDate(endStr);
+        // Pass dates inline to avoid state-update race
+        fetchData(true, undefined, undefined, undefined, startStr, endStr);
+    };
+
+    const handleTestModeToggle = () => {
+        const next = !testMode;
+        setTestMode(next);
+        fetchData(true, undefined, next);
+    };
+
+    const handlePropertyChange = (e) => {
+        const next = e.target.value;
+        setPropertyId(next);
+        fetchData(true, undefined, undefined, next);
+    };
+
     useEffect(() => {
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const formatLastUpdated = (timestamp) => {
@@ -119,7 +193,7 @@ export default function ButeakStatistics() {
                         Back to Home
                     </Link>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
                         <div>
                             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-buteak-primary to-buteak-gold bg-clip-text text-transparent">
                                 Buteak Statistics
@@ -133,76 +207,157 @@ export default function ButeakStatistics() {
                                 </p>
                             )}
                         </div>
-                        <button
-                            onClick={fetchData}
-                            disabled={loading}
-                            className="px-4 py-2 bg-buteak-primary hover:bg-buteak-primary/90 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
-                        >
-                            <svg
-                                className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
+                        <div className="flex items-center gap-3 flex-wrap">
+                            {/* Test Mode toggle */}
+                            <button
+                                onClick={handleTestModeToggle}
+                                disabled={loading}
+                                className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 border ${
+                                    testMode
+                                        ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
+                                        : "bg-white dark:bg-dark-surface-3 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-purple-600"
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                title={
+                                    testMode
+                                        ? "Test mode ON — all rooms (incl. 000, 1000) are shown"
+                                        : "Test mode OFF — rooms 000 and 1000 are excluded"
+                                }
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                <span
+                                    className={`inline-block w-2 h-2 rounded-full ${
+                                        testMode ? "bg-white" : "bg-gray-400"
+                                    }`}
                                 />
-                            </svg>
-                            Refresh
-                        </button>
+                                Test Mode: {testMode ? "ON" : "OFF"}
+                            </button>
+
+                            <button
+                                onClick={() => fetchData()}
+                                disabled={loading}
+                                className="px-4 py-2 bg-buteak-primary hover:bg-buteak-primary/90 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
+                            >
+                                <svg
+                                    className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                    />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Date Range Filter */}
-                    <div className="mt-6 p-4 bg-white dark:bg-dark-surface-2 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <div className="flex flex-wrap items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    From:
-                                </label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-buteak-gold focus:border-transparent"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    To:
-                                </label>
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-buteak-gold focus:border-transparent"
-                                />
-                            </div>
-                            <button
-                                onClick={() => fetchData(true)}
+                    {/* Property + Date filters */}
+                    <div className="mt-6 p-4 bg-white dark:bg-dark-surface-2 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
+                        {/* Property selector row */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Property:
+                            </label>
+                            <select
+                                value={propertyId}
+                                onChange={handlePropertyChange}
                                 disabled={loading}
-                                className="px-4 py-2 bg-buteak-gold hover:bg-buteak-gold/90 text-dark-bg font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-buteak-gold focus:border-transparent disabled:opacity-50"
                             >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                </svg>
-                                Apply Filter
+                                <option value="all">All Properties</option>
+                                {PROPERTIES.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Date preset buttons */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-1">
+                                Range:
+                            </label>
+                            {DATE_PRESETS.map((preset) => {
+                                const active = datePreset === preset.id;
+                                return (
+                                    <button
+                                        key={preset.id}
+                                        onClick={() => handleDatePreset(preset.id)}
+                                        disabled={loading}
+                                        className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+                                            active
+                                                ? "bg-buteak-gold text-dark-bg"
+                                                : "bg-gray-100 dark:bg-dark-surface-3 text-gray-700 dark:text-gray-300 hover:bg-buteak-gold/20"
+                                        } disabled:opacity-50`}
+                                    >
+                                        {preset.label}
+                                    </button>
+                                );
+                            })}
+                            <button
+                                onClick={() => handleDatePreset("custom")}
+                                disabled={loading}
+                                className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+                                    datePreset === "custom"
+                                        ? "bg-buteak-gold text-dark-bg"
+                                        : "bg-gray-100 dark:bg-dark-surface-3 text-gray-700 dark:text-gray-300 hover:bg-buteak-gold/20"
+                                } disabled:opacity-50`}
+                            >
+                                Custom
                             </button>
                             {(startDate || endDate) && (
                                 <button
                                     onClick={() => {
                                         clearFilters();
-                                        // Fetch without filters after clearing
-                                        setTimeout(() => fetchData(false), 100);
+                                        setTimeout(() => fetchData(false), 50);
                                     }}
-                                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors"
+                                    className="ml-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors"
                                 >
-                                    Clear Filters
+                                    Clear
                                 </button>
                             )}
                         </div>
+
+                        {/* Custom date inputs — only when Custom preset is selected */}
+                        {datePreset === "custom" && (
+                            <div className="flex flex-wrap items-center gap-3 pt-1">
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        From:
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-buteak-gold focus:border-transparent"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        To:
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="px-3 py-2 bg-gray-50 dark:bg-dark-surface-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-buteak-gold focus:border-transparent"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => fetchData(true)}
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-buteak-gold hover:bg-buteak-gold/90 text-dark-bg font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                    </svg>
+                                    Apply Filter
+                                </button>
+                            </div>
+                        )}
+
                         {(startDate || endDate) && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                                 Showing: {startDate || 'All Start'} → {endDate || 'All End'} |
@@ -301,7 +456,7 @@ export default function ButeakStatistics() {
                                     {error}
                                 </p>
                                 <button
-                                    onClick={fetchData}
+                                    onClick={() => fetchData()}
                                     className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all"
                                 >
                                     Retry
@@ -337,8 +492,8 @@ export default function ButeakStatistics() {
                                 }
                             />
                             <StatCard
-                                title="Open Requests"
-                                value={data.by_status?.Open || 0}
+                                title="Pending Requests"
+                                value={data.by_status?.Pending || 0}
                                 color="yellow"
                                 icon={
                                     <svg
@@ -377,8 +532,8 @@ export default function ButeakStatistics() {
                                 }
                             />
                             <StatCard
-                                title="Resolved"
-                                value={data.by_status?.Resolved || 0}
+                                title="Completed"
+                                value={data.by_status?.Completed || 0}
                                 color="green"
                                 icon={
                                     <svg
@@ -451,6 +606,53 @@ export default function ButeakStatistics() {
                                     ) : (
                                         <p className="text-gray-500 dark:text-gray-400 text-center py-8">
                                             No recent requests
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Missed Requests — Pending and older than 1 hour */}
+                            <div className="bg-red-50 dark:bg-red-900/10 rounded-2xl shadow-elevation-3 p-6 border border-red-200 dark:border-red-800">
+                                <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-4 flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Missed Requests
+                                    {data.missed_requests?.length > 0 && (
+                                        <span className="ml-1 px-2 py-0.5 bg-red-600 text-white text-xs rounded-full">
+                                            {data.missed_requests.length}
+                                        </span>
+                                    )}
+                                </h3>
+                                <p className="text-xs text-red-700/80 dark:text-red-300/70 mb-3">
+                                    Still pending and older than 1 hour.
+                                </p>
+                                <div className="space-y-3 max-h-80 overflow-y-auto">
+                                    {data.missed_requests?.length > 0 ? (
+                                        data.missed_requests.map((req) => (
+                                            <div
+                                                key={req.id}
+                                                className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800"
+                                            >
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="font-semibold text-red-900 dark:text-red-100">
+                                                        Room {req.room}
+                                                    </span>
+                                                    <span className="text-xs px-2 py-1 bg-red-600 text-white rounded">
+                                                        {req.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-red-800 dark:text-red-300">
+                                                    {req.type}
+                                                </p>
+                                                <p className="text-xs text-red-700/80 dark:text-red-400/70 mt-1">
+                                                    {new Date(req.created_time).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-green-600 dark:text-green-400 text-center py-8 text-sm font-medium">
+                                            ✓ No missed requests
                                         </p>
                                     )}
                                 </div>
