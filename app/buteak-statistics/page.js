@@ -219,8 +219,8 @@ export default function ButeakStatistics() {
                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                                 title={
                                     testMode
-                                        ? "Test mode ON — all rooms (incl. 000, 1000) are shown"
-                                        : "Test mode OFF — rooms 000 and 1000 are excluded"
+                                        ? "Test mode ON — all rooms (incl. 000 and rooms ≥ 1000) are shown"
+                                        : "Test mode OFF — room 000 and any room ≥ 1000 are treated as test rooms and excluded"
                                 }
                             >
                                 <span

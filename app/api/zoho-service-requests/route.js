@@ -26,8 +26,11 @@ function filterByDateRange(requests, startDate, endDate) {
     });
 }
 
-// Test-mode filter: exclude rooms 000 and 1000 (compared as numbers) when
-// testMode is OFF. When testMode is ON, no filter is applied.
+// Test-mode filter: when testMode is OFF, drop any record whose Room is
+// either "000" (parses to 0) or a 4-digit room number (>= 1000). All
+// 4-digit and higher rooms are considered test/dummy. Non-numeric room
+// names are kept (treated as real). When testMode is ON, no filter is
+// applied.
 function filterTestRooms(requests, testMode) {
     if (testMode) return requests;
 
@@ -35,7 +38,7 @@ function filterTestRooms(requests, testMode) {
         const roomName = getFieldValue(req.Room || req.Room_Number, "");
         const roomAsNumber = parseFloat(roomName);
         if (Number.isNaN(roomAsNumber)) return true; // keep non-numeric rooms
-        return roomAsNumber !== 0 && roomAsNumber !== 1000;
+        return roomAsNumber > 0 && roomAsNumber < 1000;
     });
 }
 
