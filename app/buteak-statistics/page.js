@@ -8,6 +8,7 @@ import { StatusChart } from "@/components/StatusChart";
 import { TypeChart } from "@/components/TypeChart";
 import { RoomChart } from "@/components/RoomChart";
 import { MonthlyChart } from "@/components/MonthlyChart";
+import { ServiceRatingChart } from "@/components/ServiceRatingChart";
 import { QueryBuilder } from "@/components/QueryBuilder";
 import { PROPERTIES } from "@/lib/properties";
 
@@ -568,6 +569,11 @@ export default function ButeakStatistics() {
                             {/* Room Chart */}
                             <div className="bg-white dark:bg-dark-surface-2 rounded-2xl shadow-elevation-3 p-6 border border-gray-200 dark:border-gray-700">
                                 <RoomChart data={data.by_room} />
+                            </div>
+
+                            {/* Service Rating Chart — sits in the slot to the right of RoomChart */}
+                            <div className="bg-white dark:bg-dark-surface-2 rounded-2xl shadow-elevation-3 p-6 border border-gray-200 dark:border-gray-700">
+                                <ServiceRatingChart data={data.by_rating} />
                             </div>
 
                             {/* Monthly Chart - Full Width */}

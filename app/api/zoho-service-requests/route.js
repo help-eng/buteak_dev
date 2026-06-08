@@ -150,6 +150,7 @@ function aggregateData(requests) {
         by_status: {},
         by_type: {},
         by_room: {},
+        by_rating: { Good: 0, Bad: 0, "Not Rated": 0 },
         by_month: [],
         recent_requests: [],
         missed_requests: [],
@@ -187,6 +188,15 @@ function aggregateData(requests) {
         if (room !== "N/A") {
             stats.by_room[room] = (stats.by_room[room] || 0) + 1;
         }
+
+        // Service Rating breakdown. Zoho picklist values are "Good" / "Bad";
+        // anything else (empty / null / other) buckets into "Not Rated".
+        const rawRating = getFieldValue(request.Service_Rating, "");
+        const rating =
+            rawRating === "Good" ? "Good" :
+            rawRating === "Bad" ? "Bad" :
+            "Not Rated";
+        stats.by_rating[rating] = (stats.by_rating[rating] || 0) + 1;
 
         // Monthly aggregation
         const createdTime = request.Created_Time || request.created_time;
