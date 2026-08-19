@@ -1,5 +1,6 @@
 "use client";
 
+import { faqUrl } from "@/lib/config";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -354,7 +355,7 @@ function InfoTab() {
                         </div>
                         <div>
                             <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">API Endpoint</p>
-                            <p className="text-base text-xs">https://api.buteak.in/chat</p>
+                            <p className="text-base text-xs">{faqUrl("/chat")}</p>
                         </div>
                     </div>
                 </div>

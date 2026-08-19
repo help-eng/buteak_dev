@@ -4,36 +4,37 @@ import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ResultsTable } from "@/components/ResultsTable";
 import Link from "next/link";
+import { faqUrl } from "@/lib/config";
 
 // Chatbot API endpoints
 const CHATBOT_ENDPOINTS = [
     {
         name: "Chat - POST",
-        url: "https://api.buteak.in/chat",
+        url: faqUrl("/chat"),
         method: "POST",
         body: { question: "Are couples allowed?", n_results: 3 }
     },
     {
         name: "Root - GET",
-        url: "https://api.buteak.in/",
+        url: faqUrl("/"),
         method: "GET",
         body: null
     },
     {
         name: "Rebuild - POST",
-        url: "https://api.buteak.in/rebuild",
+        url: faqUrl("/rebuild"),
         method: "POST",
         body: {}
     },
     {
         name: "Status - GET",
-        url: "https://api.buteak.in/status",
+        url: faqUrl("/status"),
         method: "GET",
         body: null
     },
     {
         name: "Update - POST",
-        url: "https://api.buteak.in/update",
+        url: faqUrl("/update"),
         method: "POST",
         body: {}
     }
@@ -67,13 +68,6 @@ const PMS_ENDPOINTS = [
             }
         })
     },
-    {
-        name: "Price Testing - POST",
-        url: "price-testing",
-        method: "POST",
-        requiresAuth: true,
-        isPriceTesting: true
-    }
 ];
 
 export default function TestAPIs() {
@@ -86,7 +80,9 @@ export default function TestAPIs() {
 
     // PMS credentials
     const [hotelCode, setHotelCode] = useState(process.env.NEXT_PUBLIC_HOTEL_CODE || "55402");
-    const [authCode, setAuthCode] = useState(process.env.NEXT_PUBLIC_AUTH_CODE || "40230910707e9e1bd2-7813-11f0-9");
+    // No hardcoded fallback: this is a client component, so a literal here ships
+    // inside the browser bundle. Supply it via NEXT_PUBLIC_AUTH_CODE or type it in.
+    const [authCode, setAuthCode] = useState(process.env.NEXT_PUBLIC_AUTH_CODE || "");
 
     const handleTest = async () => {
         setLoading(true);
@@ -99,30 +95,20 @@ export default function TestAPIs() {
 
             let response;
 
-            if (endpoint.isPriceTesting) {
-                // Use the special price testing endpoint
-                response = await fetch("/api/test-price", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ hotelCode, authCode, runs })
-                });
-            } else {
-                // Use the regular Lambda proxy
-                const body = endpoint.requiresAuth
-                    ? endpoint.bodyTemplate(hotelCode, authCode)
-                    : endpoint.body;
+            const body = endpoint.requiresAuth
+                ? endpoint.bodyTemplate(hotelCode, authCode)
+                : endpoint.body;
 
-                response = await fetch("/api/test-lambda", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        url: endpoint.url,
-                        method: endpoint.method,
-                        runs,
-                        body
-                    })
-                });
-            }
+            response = await fetch("/api/test-lambda", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    url: endpoint.url,
+                    method: endpoint.method,
+                    runs,
+                    body
+                })
+            });
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
