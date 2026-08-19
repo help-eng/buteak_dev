@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { faqUrl } from "@/lib/config";
 
 export async function POST(request) {
     try {
@@ -35,7 +36,11 @@ export async function POST(request) {
             ToDate: toDate
         });
 
-        const apiUrl = `https://api.buteak.in/api/prices?${params}`;
+        // NOTE: this is the FAQ service's legacy XML passthrough, carried over from the
+        // t3.small for parity only. The real price path is the NestJS /api/prices on
+        // api.thedailysocial.co.in, which takes JSON and quotes from the same
+        // server-side eZee integration as checkout. Prefer that for anything real.
+        const apiUrl = `${faqUrl("/api/prices")}?${params}`;
         const lambdaUrl = process.env.NEXT_PUBLIC_LAMBDA_URL;
 
         // Call Lambda function with the price API request

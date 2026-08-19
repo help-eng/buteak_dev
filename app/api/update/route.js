@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { faqUrl } from "@/lib/config";
 
 export async function POST(request) {
     try {
@@ -11,7 +12,7 @@ export async function POST(request) {
             );
         }
 
-        const url = `https://api.buteak.in/update?property_id=${encodeURIComponent(property_id)}`;
+        const url = `${faqUrl("/update")}?property_id=${encodeURIComponent(property_id)}`;
         const response = await fetch(url, {
             method: "POST",
             headers: {

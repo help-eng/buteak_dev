@@ -4,36 +4,37 @@ import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ResultsTable } from "@/components/ResultsTable";
 import Link from "next/link";
+import { faqUrl } from "@/lib/config";
 
 // Chatbot API endpoints
 const CHATBOT_ENDPOINTS = [
     {
         name: "Chat - POST",
-        url: "https://api.buteak.in/chat",
+        url: faqUrl("/chat"),
         method: "POST",
         body: { question: "Are couples allowed?", n_results: 3 }
     },
     {
         name: "Root - GET",
-        url: "https://api.buteak.in/",
+        url: faqUrl("/"),
         method: "GET",
         body: null
     },
     {
         name: "Rebuild - POST",
-        url: "https://api.buteak.in/rebuild",
+        url: faqUrl("/rebuild"),
         method: "POST",
         body: {}
     },
     {
         name: "Status - GET",
-        url: "https://api.buteak.in/status",
+        url: faqUrl("/status"),
         method: "GET",
         body: null
     },
     {
         name: "Update - POST",
-        url: "https://api.buteak.in/update",
+        url: faqUrl("/update"),
         method: "POST",
         body: {}
     }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { faqUrl } from "@/lib/config";
 
 export async function POST(request) {
     try {
@@ -11,7 +12,7 @@ export async function POST(request) {
             );
         }
 
-        const response = await fetch("https://api.buteak.in/chat", {
+        const response = await fetch(faqUrl("/chat"), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
