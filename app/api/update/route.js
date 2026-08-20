@@ -1,41 +1,17 @@
 import { NextResponse } from "next/server";
-import { faqUrl } from "@/lib/config";
+import { FAQ_RETIRED } from "@/lib/config";
 
-export async function POST(request) {
-    try {
-        const { property_id } = await request.json().catch(() => ({}));
-
-        if (!property_id) {
-            return NextResponse.json(
-                { error: "Missing 'property_id' in request body" },
-                { status: 400 }
-            );
-        }
-
-        const url = `${faqUrl("/update")}?property_id=${encodeURIComponent(property_id)}`;
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({}),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            return NextResponse.json(
-                { error: `Update API error: ${errorText}` },
-                { status: response.status }
-            );
-        }
-
-        const result = await response.json();
-        return NextResponse.json(result);
-    } catch (error) {
-        console.error("Error calling update API:", error);
-        return NextResponse.json(
-            { error: error.message || "Internal server error" },
-            { status: 500 }
-        );
-    }
+/**
+ * RETIRED 2026-08-20 — see lib/config.js for the full reasoning.
+ *
+ * This proxied POST /update on the standalone FAQ service. That service was deleted
+ * when the chatbot became a sidecar in the tds-backend task; the write endpoints
+ * were removed deliberately, not incidentally, and must not be restored while
+ * tds-api runs more than one task.
+ *
+ * 501 rather than a silent success: a control that appears to reindex and does
+ * nothing is worse than one that says it is gone.
+ */
+export async function POST() {
+    return NextResponse.json(FAQ_RETIRED, { status: 501 });
 }
