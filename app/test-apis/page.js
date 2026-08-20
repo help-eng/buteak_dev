@@ -4,41 +4,11 @@ import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ResultsTable } from "@/components/ResultsTable";
 import Link from "next/link";
-import { faqUrl } from "@/lib/config";
 
-// Chatbot API endpoints
-const CHATBOT_ENDPOINTS = [
-    {
-        name: "Chat - POST",
-        url: faqUrl("/chat"),
-        method: "POST",
-        body: { question: "Are couples allowed?", n_results: 3 }
-    },
-    {
-        name: "Root - GET",
-        url: faqUrl("/"),
-        method: "GET",
-        body: null
-    },
-    {
-        name: "Rebuild - POST",
-        url: faqUrl("/rebuild"),
-        method: "POST",
-        body: {}
-    },
-    {
-        name: "Status - GET",
-        url: faqUrl("/status"),
-        method: "GET",
-        body: null
-    },
-    {
-        name: "Update - POST",
-        url: faqUrl("/update"),
-        method: "POST",
-        body: {}
-    }
-];
+// The Chatbot tab was removed on 2026-08-20. The FAQ chatbot became a sidecar in
+// the tds-backend task and has no address reachable from a browser -- see
+// lib/config.js. These probes hit it directly (not through /api/*), so there is
+// nothing to repoint them at.
 
 // PMS API endpoints
 const PMS_ENDPOINTS = [
@@ -71,7 +41,7 @@ const PMS_ENDPOINTS = [
 ];
 
 export default function TestAPIs() {
-    const [activeTab, setActiveTab] = useState("chatbot");
+    const [activeTab, setActiveTab] = useState("pms");
     const [selectedEndpoint, setSelectedEndpoint] = useState(0);
     const [runs, setRuns] = useState(5);
     const [loading, setLoading] = useState(false);
@@ -90,7 +60,7 @@ export default function TestAPIs() {
         setResults(null);
 
         try {
-            const endpoints = activeTab === "chatbot" ? CHATBOT_ENDPOINTS : PMS_ENDPOINTS;
+            const endpoints = PMS_ENDPOINTS;
             const endpoint = endpoints[selectedEndpoint];
 
             let response;
@@ -128,7 +98,7 @@ export default function TestAPIs() {
         }
     };
 
-    const currentEndpoints = activeTab === "chatbot" ? CHATBOT_ENDPOINTS : PMS_ENDPOINTS;
+    const currentEndpoints = PMS_ENDPOINTS;
 
     return (
         <main className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-dark-bg dark:via-dark-surface dark:to-dark-surface-1">
@@ -154,15 +124,6 @@ export default function TestAPIs() {
 
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <button
-                        onClick={() => { setActiveTab("chatbot"); setSelectedEndpoint(0); setResults(null); }}
-                        className={`px-6 py-3 font-semibold transition-all ${activeTab === "chatbot"
-                            ? "border-b-2 border-buteak-gold text-buteak-primary dark:text-buteak-gold"
-                            : "text-gray-600 dark:text-gray-400 hover:text-buteak-primary dark:hover:text-buteak-gold"
-                            }`}
-                    >
-                        Chatbot APIs
-                    </button>
                     <button
                         onClick={() => { setActiveTab("pms"); setSelectedEndpoint(0); setResults(null); }}
                         className={`px-6 py-3 font-semibold transition-all ${activeTab === "pms"

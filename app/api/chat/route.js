@@ -1,44 +1,19 @@
 import { NextResponse } from "next/server";
-import { faqUrl } from "@/lib/config";
+import { FAQ_RETIRED } from "@/lib/config";
 
-export async function POST(request) {
-    try {
-        const { question, n_results, property_id } = await request.json();
-
-        if (!question) {
-            return NextResponse.json(
-                { error: "Missing 'question' parameter" },
-                { status: 400 }
-            );
-        }
-
-        const response = await fetch(faqUrl("/chat"), {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                question,
-                n_results: n_results || 3,
-                property_id: property_id || undefined,
-            }),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            return NextResponse.json(
-                { error: `Chatbot API error: ${errorText}` },
-                { status: response.status }
-            );
-        }
-
-        const result = await response.json();
-        return NextResponse.json(result);
-    } catch (error) {
-        console.error("Error calling chatbot API:", error);
-        return NextResponse.json(
-            { error: error.message || "Internal server error" },
-            { status: 500 }
-        );
-    }
+/**
+ * RETIRED 2026-08-20 — see lib/config.js for the full reasoning.
+ *
+ * Unlike /update, /rebuild and /delete, there is no design objection to a
+ * READ-ONLY chat probe from this dashboard — it mutates nothing and cannot make
+ * the two tasks disagree. It is gone only because the chatbot no longer has an
+ * address reachable from outside the tds-backend task.
+ *
+ * Restoring it means adding a guarded proxy route on the NestJS backend, which
+ * can reach the sidecar on 127.0.0.1:8000, and pointing this at that route. That
+ * is a backend change and a production deploy, so it is left undone rather than
+ * guessed at. Ask before building it.
+ */
+export async function POST() {
+    return NextResponse.json(FAQ_RETIRED, { status: 501 });
 }
